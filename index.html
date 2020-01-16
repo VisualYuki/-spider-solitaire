@@ -6,11 +6,11 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
 
     <title>Document</title>
+
     <link rel="stylesheet" href="./css/style.css" />
-    <link rel="stylesheet" href="./css/media.css" />
     <link rel="stylesheet" href="./css/font.css" />
+    <link rel="stylesheet" href="./css/media.css" />
     <link rel="stylesheet" href="./css/animation.css" />
-    <link rel="stylesheet" href="./css/normalize.css" />
   </head>
   <body>
     <!-- MAIN -->
@@ -18,16 +18,61 @@
       <div class="main__container">
         <!-- HEADER -->
         <header>
+          <div class="header-top">
+            <div class="header__sound"></div>
+            <div class="header__time">
+              <div class="header__time-icon"></div>
+              <div class="header__time-content">00:00</div>
+            </div>
+            <div class="header__time-moves">
+              <span class="time-moves__title">Moves:</span>
+              <span class="time-moves__count">0</span>
+            </div>
+          </div>
+
           <div class="game-options">
             <div class="game-options__title">
               Options
             </div>
             <ul class="game-options__btns">
-              <li>New Game</li>
-              <li>Restart</li>
-              <li>One Suit</li>
-              <li>Two Suit</li>
-              <li>Four Suit</li>
+              <li>
+                <div class="li-title">New Game</div>
+                <div
+                  class="game-options__icon game-options__new-game-icon"
+                ></div>
+              </li>
+              <li>
+                <div class="li-title">Restart</div>
+                <div
+                  class="game-options__icon game-options__restart-icon"
+                ></div>
+              </li>
+              <li>
+                <div class="li-title">One Suit</div>
+                <div
+                  class="game-options__icon game-options__one-suit-icon"
+                ></div>
+              </li>
+              <li>
+                <div class="li-title">Two Suit</div>
+                <div class="game-options__icon-block">
+                  <div class="game-options__icon icon-block__spades-icon"></div>
+                  <div
+                    class="game-options__icon icon-block__diamods-icon"
+                  ></div>
+                </div>
+              </li>
+              <li>
+                <div class="li-title">Four Suit</div>
+                <div class="game-options__icon-block">
+                  <div class="game-options__icon icon-block__spades-icon"></div>
+                  <div
+                    class="game-options__icon icon-block__diamods-icon"
+                  ></div>
+                  <div class="game-options__icon icon-block__clubs-icon"></div>
+                  <div class="game-options__icon icon-block__hearts-icon"></div>
+                </div>
+              </li>
             </ul>
           </div>
 
@@ -36,9 +81,22 @@
               Help
             </div>
             <ul class="game-help__btns">
-              <li>Hint</li>
-              <li>Step Back</li>
-              <li>Step Next</li>
+              <li>
+                <div class="li-title">Hint</div>
+                <div class="game-options__icon game-options__hint-icon"></div>
+              </li>
+              <li>
+                <div class="li-title">Step Back</div>
+                <div
+                  class="game-options__icon game-options__step-back-icon"
+                ></div>
+              </li>
+              <li>
+                <div class="li-title">Step Next</div>
+                <div
+                  class="game-options__icon game-options__step-next-icon"
+                ></div>
+              </li>
             </ul>
           </div>
         </header>

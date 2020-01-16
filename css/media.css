@@ -1,0 +1,35 @@
+@media (max-width: 1200px) {
+  header {
+    flex-flow: column;
+  }
+  .game-options {
+    margin-right: 0px;
+  }
+  .game-options__btns {
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .game-help__btns {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 750px) {
+  .game-options__icon {
+    display: none;
+  }
+
+  .game-options__icon-block {
+    display: none;
+  }
+  .game-help__btns {
+    height: 32px;
+  }
+}
+
+@media (max-width: 500px) {
+  .header-top {
+    left: 10%;
+  }
+}
