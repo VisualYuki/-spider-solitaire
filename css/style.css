@@ -305,11 +305,24 @@ header {
   height: 150px;
 
   border: 2px solid black;
-  border-radius: 10px;
+  border-radius: 9px;
 }
 
 .shirt-img {
   box-sizing: content-box;
   background: url("../images/card-shirt.png") no-repeat center;
   background-size: cover;
+}
+
+.inactive-button {
+  border-color: rgb(168, 168, 168) !important;
+  color: gray !important;
+  cursor: auto !important;
+  background-color: inherit !important;
+}
+
+.suit-button__checked {
+  border-color: rgb(230, 76, 5) !important;
+  cursor: auto !important;
+  background-color: inherit !important;
 }
