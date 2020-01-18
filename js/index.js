@@ -1,30 +1,117 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-  // класс для получения случайной карты из 104 без повторения.
-  class cardSet {
-    constructor() {
-      this.cardDoubleArray = [];
-      let cardImgIndex;
-      this.DOUBLE_CARD_NUMBER = 104; // 52 * 2
+  /*===================
+    CARD SET CLASS
+ =====================*/
 
-      //Получаем массив изображений из 52 карт.
+  // Класс для получения случайной карты из 104 без повторения.
+  class cardSet {
+    // Массивы содержащие по 14 карт каждой масти
+    clubsImgArray = [];
+    spadesImgArray = [];
+    diamondsImgArray = [];
+    heartsImgArray = [];
+
+    // Массивы содержащие по 104 карты по 1-ой 2-ум и 4-мя мастям
+    oneSuitArray = [];
+    twoSuitArray = [];
+    fourSuitArray = [];
+
+    // CONSTS
+    DOUBLE_CARD_NUMBER = 104; // количество карт для двух колод
+    ONE_SUIT_CARD_NUM = 13; // количество карт с одной масти
+
+    constructor() {
+      //Добавляем путь изображения в каждый массив 4-ех мастей
       for (let suit of ["clubs", "spades", "diamonds", "hearts"]) {
         for (let i = 2; i <= 14; i++) {
-          if (i < 10) cardImgIndex = "0" + i;
-          else cardImgIndex = i;
-
-          this.cardDoubleArray[this.cardDoubleArray.length] = new Image();
-
-          this.cardDoubleArray[this.cardDoubleArray.length - 1].src =
-            "../images/" + "cards/" + suit + "/" + cardImgIndex + ".png"; // названия карт идут от 02.png до 14.png
+          if (i < 10) this.cardImgIndex = "0" + i;
+          else this.cardImgIndex = i;
+          switch (suit) {
+            case "clubs":
+              this.clubsImgArray[
+                this.clubsImgArray.length
+              ] = `../images/cards/${suit}/${this.cardImgIndex}.png`;
+              break;
+            case "spades":
+              this.spadesImgArray[
+                this.spadesImgArray.length
+              ] = `../images/cards/${suit}/${this.cardImgIndex}.png`;
+              break;
+            case "diamonds":
+              this.diamondsImgArray[
+                this.diamondsImgArray.length
+              ] = `../images/cards/${suit}/${this.cardImgIndex}.png`;
+              break;
+            case "diamonds":
+              this.heartsImgArray[
+                this.heartsImgArray.length
+              ] = `../images/cards/${suit}/${this.cardImgIndex}.png`;
+              break;
+          }
         }
       }
 
-      // Дублируем массив из 52 карт до 104 карт.
-      this.cardDoubleArray.forEach((item, index) => {
-        this.cardDoubleArray[index + 52] = this.cardDoubleArray[index];
-      });
+      this.createOneSuitArray();
 
-      this.shuffleCards(2);
+      this.createTwoSuitArray();
+    }
+
+    addArrayElement(value, index, array) {
+      array[index] = value;
+    }
+
+    //Заполняем массив из 104 карт колодой из одной масти
+    createOneSuitArray() {
+      for (let i = 0; i < this.ONE_SUIT_CARD_NUM; i++) {
+        for (let j = 0; j < 8; j++) {
+          this.addArrayElement(
+            this.spadesImgArray[i],
+            this.ONE_SUIT_CARD_NUM * j + i,
+            this.oneSuitArray
+          );
+        }
+      }
+    }
+
+    //Заполняем массив из 104 карт колодой из двух мастей
+    createTwoSuitArray() {
+      for (let i = 0; i < this.ONE_SUIT_CARD_NUM; i++) {
+        for (let j = 0; j < 4; j++) {
+          this.addArrayElement(
+            this.spadesImgArray[i],
+            this.ONE_SUIT_CARD_NUM * j + i,
+            this.twoSuitArray
+          );
+        }
+        for (let j = 0; j < 4; j++) {
+          this.addArrayElement(
+            this.diamondsImgArray[i],
+            this.ONE_SUIT_CARD_NUM * j + i + 52,
+            this.twoSuitArray
+          );
+        }
+      }
+    }
+
+    //! доделать
+    //Заполняем массив из 104 карт колодой из четырех мастей
+    createFourSuitArray() {
+      for (let i = 0; i < this.ONE_SUIT_CARD_NUM; i++) {
+        for (let j = 0; j < 4; j++) {
+          this.addArrayElement(
+            this.spadesImgArray[i],
+            this.ONE_SUIT_CARD_NUM * j + i,
+            this.twoSuitArray
+          );
+        }
+        for (let j = 0; j < 4; j++) {
+          this.addArrayElement(
+            this.diamondsImgArray[i],
+            this.ONE_SUIT_CARD_NUM * j + i + 52,
+            this.twoSuitArray
+          );
+        }
+      }
     }
 
     //Перемешиваем карты в колоде
@@ -54,20 +141,21 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
   }
 
-  //! Установить переменные как свойства перед конструктором.
+  /*===================
+      DECK CLASS
+ =====================*/
 
   // Класс колода для раздачи карт по колонкам.
   class Deck {
-    count = 12;
+    SET_NUM = 6; // количество карт в колоде для раздачи
+    SET_CARD_NUM = 10; //количество карт при раздаче на все колонки
+
+    cardDeckElement = $("#card-deck");
+
+    currentSetIndex = -1;
+    cardSets = [];
+
     constructor() {
-      this.SET_NUM = 6; // количество карт в колоде для раздачи
-      this.SET_CARD_NUM = 10; //количество карт при раздаче на все колонки
-
-      this.cardDeckElement = $("#card-deck");
-
-      this.currentSetIndex = -1;
-      this.cardSets = [];
-
       //Заполняем наборы карт для распределения по колонкам.
       for (let i = 0; i < this.SET_NUM; i++) {
         this.cardSets[i] = [];
@@ -75,7 +163,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
           this.cardSets[i][j] = set.getNextRandCard();
         }
       }
-      // this.pushSet();
+      //this.pushSet();
       this.fillFullDeck();
     }
 
@@ -95,7 +183,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
       element.className = "card shirt-img";
       element.style.right = `${this.currentSetIndex * 7}px`;
       element.style.zIndex = this.currentSetIndex;
-      $(element).on("click", handOutCards());
+      element.addEventListener("click", this.handOutCards);
 
       $(this.cardDeckElement).append(element);
     }
@@ -104,6 +192,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
   }
 
   set = new cardSet();
-  deck = new Deck();
-  console.log(set.getNextRandCard());
+  //deck = new Deck();
+  //console.log(set.getNextRandCard());
 });
+
+// let textImg = new Image();
+
+// textImg.src = "../images/" + "cards/clubs/" + "03.png";
+
+// document.getElementById("testId").append(textImg);
