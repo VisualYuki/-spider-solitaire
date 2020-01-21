@@ -326,3 +326,8 @@ header {
   cursor: auto !important;
   background-color: inherit !important;
 }
+
+#columns > li {
+  width: 9%;
+  height: 10px;
+}

@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
     CARD SET CLASS
  =====================*/
 
+  const WRAP_CARD_STEP = 7; // количество пикселей между картами в колонке
+
   // Класс для получения случайной карты из 104 без повторения.
   class CardSet {
     // Массивы содержащие по 14 карт каждой масти
@@ -31,6 +33,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         for (let i = 2; i <= 14; i++) {
           if (i < 10) this.cardImgIndex = "0" + i;
           else this.cardImgIndex = i;
+
           switch (suit) {
             case "clubs":
               this.clubsImgArray[
@@ -157,10 +160,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
     //Параметры текущей колоды
     currentSetIndex = -1;
     cardSets = [];
-    set;
+    //set;
 
     constructor(set) {
-      this.set = set;
+      // this.set = set;
+
       //Заполняем наборы карт для распределения по колонкам. Всего 6 наборов
       for (let i = 0; i < this.SET_NUM; i++) {
         this.cardSets[i] = [];
@@ -171,6 +175,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
       this.fillDeckFull_OnBoard();
     }
+
     //Заполняет колоды полностью ( 6 карт)
     fillDeckFull_OnBoard() {
       for (let i = 0; i < this.SET_NUM; i++) {
@@ -183,7 +188,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
       this.cardDeckElement.lastChild.remove();
     }
 
-    //! метод createElem();
     // Добавляем карту в колоду
     addCard_OnBoard() {
       this.currentSetIndex++;
@@ -191,23 +195,103 @@ document.addEventListener("DOMContentLoaded", function(event) {
         "li",
         "card shirt-img",
         {
-          right: `${this.currentSetIndex * 7}px`,
+          right: `${this.currentSetIndex * WRAP_CARD_STEP}px`,
           zIndex: this.currentSetIndex
         },
         { event: "click", handler: this.handOutCards }
       );
 
-      // let element = document.createElement("li");
-      // element.className = "card shirt-img";
-      // element.style.right = `${this.currentSetIndex * 7}px`;
-      // element.style.zIndex = this.currentSetIndex;
-      // element.addEventListener("click", this.handOutCards);
-
       this.cardDeckElement.appendChild(element);
     }
 
+    // Раскидываем карты по колонкам в начале игры
+    handOutDefaultCards() {
+      for (let i = 1; i < 6; i++) {
+        for (let column of [
+          column1,
+          column2,
+          column3,
+          column4,
+          column5,
+          column6,
+          column7,
+          column8,
+          column9,
+          column10
+        ]) {
+          if (i < column.cardTotal) {
+            this.moveClosedCard(column);
+          } else if (i == column.cardTotal) {
+            this.moveOpenedCard(column);
+          }
+        }
+      }
+    }
+
+    //Перемещаем закрытую карту в колонку
+    moveClosedCard(column) {
+      let cardImg = cardSet.getNextRandCard();
+      const element = createMyElement("li", "card shirt-img", {
+        right: `${this.currentSetIndex * WRAP_CARD_STEP}px`,
+        zIndex: this.currentSetIndex
+      });
+      element.dataset.imgsrc = cardImg;
+      this.cardDeckElement.appendChild(element);
+
+      $(element).animate(
+        {
+          left: column.left.toString(),
+          top: `${column.cardTotal * WRAP_CARD_STEP}px`,
+          zIndex: column.cardTotal.toString()
+        },
+        1000
+      );
+    }
+
+    //Перемещаем открытую карту в колонку
+    moveOpenedCard() {}
+
     handOutCards() {}
   }
+
+  /*===================
+      COLUMN  CLASS
+ =====================*/
+  class Column {
+    liCardArray = [];
+    cardTotal = 0;
+    closedCardTotal;
+
+    columnElement;
+    left;
+
+    constructor(closedCardTotal, id) {
+      this.closedCardTotal = closedCardTotal;
+      this.cardTotal = closedCardTotal + 1;
+
+      this.columnElement = document.getElementById("column" + id);
+      this.left = this.columnElement.offsetLeft; //+ this.columnElement.offsetWidth / 2
+    }
+  }
+
+  let cardSet = new CardSet();
+
+  let column1 = new Column(5, 1),
+    column2 = new Column(5, 2),
+    column3 = new Column(5, 3),
+    column4 = new Column(5, 4),
+    column5 = new Column(4, 5),
+    column6 = new Column(4, 6),
+    column7 = new Column(4, 7),
+    column8 = new Column(4, 8),
+    column9 = new Column(4, 9),
+    column10 = new Column(4, 10);
+  let deck = new Deck(cardSet);
+  deck.handOutDefaultCards();
+
+  //let time = new Timer();
+
+  //time.start();
 
   /*===================
       CREATE ELEMENT FUNCTION
@@ -216,11 +300,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
   function createMyElement(tag, className, props, event) {
     const element = document.createElement(tag);
     element.className = className;
-    Object.keys(props).forEach(prop => {
-      element[prop] = props[prop];
-    });
 
-    element.addEventListener(event["event"], event["handler"]);
+    for (prop in props) {
+      element.style[prop] = props[prop];
+    }
+
+    if (event !== undefined)
+      element.addEventListener(event["event"], event["handler"]);
 
     return element;
   }
@@ -265,19 +351,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
       this.id = setTimeout(this.setTimeOutFunction, 1000, 0, 0);
     };
   };
-
-  /*===================
-      COLUMN  CLASS
- =====================*/
-  class Column {
-    constructor() {}
-  }
-
-  let cardSet = new CardSet();
-  let deck = new Deck(cardSet);
-  let time = new Timer();
-  time.start();
 });
+
+// let element = document.createElement("li");
+// element.className = "card shirt-img";
+// element.style.right = `${this.currentSetIndex * 7}px`;
+// element.style.zIndex = this.currentSetIndex;
+// element.addEventListener("click", this.handOutCards);
 
 // class Timer {
 //   timerElement = document.getElementById("timerElement");
