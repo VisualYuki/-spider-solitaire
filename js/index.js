@@ -183,15 +183,25 @@ document.addEventListener("DOMContentLoaded", function(event) {
       this.cardDeckElement.lastChild.remove();
     }
 
+    //! метод createElem();
     // Добавляем карту в колоду
     addCard_OnBoard() {
       this.currentSetIndex++;
+      const element = createMyElement(
+        "li",
+        "card shirt-img",
+        {
+          right: `${this.currentSetIndex * 7}px`,
+          zIndex: this.currentSetIndex
+        },
+        { event: "click", handler: this.handOutCards }
+      );
 
-      let element = document.createElement("li");
-      element.className = "card shirt-img";
-      element.style.right = `${this.currentSetIndex * 7}px`;
-      element.style.zIndex = this.currentSetIndex;
-      element.addEventListener("click", this.handOutCards);
+      // let element = document.createElement("li");
+      // element.className = "card shirt-img";
+      // element.style.right = `${this.currentSetIndex * 7}px`;
+      // element.style.zIndex = this.currentSetIndex;
+      // element.addEventListener("click", this.handOutCards);
 
       this.cardDeckElement.appendChild(element);
     }
@@ -199,45 +209,125 @@ document.addEventListener("DOMContentLoaded", function(event) {
     handOutCards() {}
   }
 
+  /*===================
+      CREATE ELEMENT FUNCTION
+ =====================*/
+
+  function createMyElement(tag, className, props, event) {
+    const element = document.createElement(tag);
+    element.className = className;
+    Object.keys(props).forEach(prop => {
+      element[prop] = props[prop];
+    });
+
+    element.addEventListener(event["event"], event["handler"]);
+
+    return element;
+  }
+
+  /*===================
+        TIMER OBJECT
+ =====================*/
+
+  //Объект для текущего времени игры
+  const Timer = function() {
+    this.id;
+    this.timerElement = document.getElementById("timerElement");
+
+    // Запустить таймер
+    this.start = () => {
+      setTimeout(this.setTimeOutFunction, 1000, 0, 0);
+    };
+
+    //Форматировать время
+    this.formatDateNumber = number => {
+      if (number < 10) return "0" + number;
+      else return number;
+    };
+
+    // Функция для SetTimeOut
+    this.setTimeOutFunction = (minuts, seconds) => {
+      seconds++;
+      if (seconds == 60) {
+        minuts++;
+        seconds = 0;
+      }
+
+      this.timerElement.textContent =
+        this.formatDateNumber(minuts) + ":" + this.formatDateNumber(seconds);
+      this.id = setTimeout(this.setTimeOutFunction, 1000, minuts, seconds);
+    };
+
+    // Перезапустить таймер
+    this.restart = () => {
+      this.timerElement.textContent = "00:00";
+      clearTimeout(this.id);
+      this.id = setTimeout(this.setTimeOutFunction, 1000, 0, 0);
+    };
+  };
+
+  /*===================
+      COLUMN  CLASS
+ =====================*/
   class Column {
     constructor() {}
   }
 
-  //Класс для текущего времени
-  class Timer {
-    timerElement = document.getElementById("timerElement");
-    seconds = 0;
-    minuts = 0;
-
-    //Добавляем ноль, если число состояит из одной цирфы
-    formatDateNumber(number) {
-      if (number < 10) return "0" + number;
-      else return number;
-    }
-
-    //! доделать.
-    //Устанавливаем интервал для обновления времени
-    startTimer() {
-      setInterval(function() {
-        this.seconds++;
-        if (this.seconds < 60) {
-          this.minuts++;
-          this.seconds = 0;
-        }
-        this.timerElement.textContent =
-          this.formatDateNumber(this.minuts) +
-          ":" +
-          formatDateNumber(this.seconds);
-        this.minuts;
-      }, 1000);
-    }
-
-    //Обнуляем время таймера
-    setDefaultValue() {}
-  }
-
   let cardSet = new CardSet();
   let deck = new Deck(cardSet);
-  let timer = new Timer();
-  timer.startTimer();
+  let time = new Timer();
+  time.start();
 });
+
+// class Timer {
+//   timerElement = document.getElementById("timerElement");
+//   // seconds = 0;
+//   // minuts = 0;
+
+//   //Добавляем ноль, если число состояит из одной цирфы
+
+//   setTimeOutFunction(minuts, seconds) {
+//     function formatDateNumber(number) {
+//       if (number < 10) return "0" + number;
+//       else return number;
+//     }
+
+//     seconds++;
+//     if (seconds == 60) {
+//       minuts++;
+//       seconds = 0;
+//     }
+
+//     this.timerElement.textContent =
+//       formatDateNumber(minuts) + ":" + formatDateNumber(seconds);
+//     setTimeout(this.setTimeOutFunction, 1000, minuts, seconds);
+//   }
+
+//   //Устанавливаем интервал для обновления времени
+//   startTimer() {
+//     let minuts = 0,
+//       seconds = 0;
+//     setTimeout(this.setTimeOutFunction, 1000, minuts, seconds);
+//   }
+
+//   //Обнуляем время таймера
+//   restartTimer() {}
+// }
+
+// timerElement = document.getElementById("timerElement");
+
+// function setIntervalFunction() {
+//   seconds++;
+//   if (seconds == 60) {
+//     minuts++;
+//     seconds = 0;
+//   }
+//   timerElement.textContent =
+//     formatDateNumber(minuts) + ":" + formatDateNumber(seconds);
+//   setTimeout(setIntervalFunction, 1000, minuts, seconds);
+// }
+
+// function formatDateNumber(number) {
+//   if (number < 10) return "0" + number;
+//   else return number;
+// }
