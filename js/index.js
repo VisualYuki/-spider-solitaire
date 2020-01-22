@@ -1,9 +1,9 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-  /*===================
-    CARD SET CLASS
- =====================*/
-
   const WRAP_CARD_STEP = 7; // количество пикселей между картами в колонке
+
+  /*===================
+    CARD SET 
+ =====================*/
 
   // Класс для получения случайной карты из 104 без повторения.
   class CardSet {
@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
   }
 
   /*===================
-      DECK CLASS
+      DECK 
  =====================*/
 
   // Класс колода для раздачи карт по колонкам.
@@ -176,7 +176,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
       this.fillDeckFull_OnBoard();
     }
 
-    //Заполняет колоды полностью ( 6 карт)
+    //Заполняет колоды полностью (6 карт)
     fillDeckFull_OnBoard() {
       for (let i = 0; i < this.SET_NUM; i++) {
         this.addCard_OnBoard();
@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         "card shirt-img",
         {
           right: `${this.currentSetIndex * WRAP_CARD_STEP}px`,
-          zIndex: this.currentSetIndex
+          "z-index": this.currentSetIndex
         },
         { event: "click", handler: this.handOutCards }
       );
@@ -206,7 +206,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     // Раскидываем карты по колонкам в начале игры
     handOutDefaultCards() {
-      for (let i = 1; i < 6; i++) {
+      //console.log(document.querySelector("header").getBoundingClientRect());
+      let delay = 0;
+      for (let i = 1; i <= 5; i++) {
         for (let column of [
           column1,
           column2,
@@ -219,60 +221,82 @@ document.addEventListener("DOMContentLoaded", function(event) {
           column9,
           column10
         ]) {
-          if (i < column.cardTotal) {
-            this.moveClosedCard(column);
-          } else if (i == column.cardTotal) {
-            this.moveOpenedCard(column);
+          if (i <= column.cardTotal) {
+            delay += 10;
+            setTimeout(this.moveCard, delay, column, i);
+            //this.moveCard(column, i);
           }
         }
       }
     }
 
-    //Перемещаем закрытую карту в колонку
-    moveClosedCard(column) {
+    //Перемещаем карту в колонку
+    moveCard(column, i) {
       let cardImg = cardSet.getNextRandCard();
-      const element = createMyElement("li", "card shirt-img", {
-        right: `${this.currentSetIndex * WRAP_CARD_STEP}px`,
-        zIndex: this.currentSetIndex
+      let cardDeckElement = document.getElementById("card-deck");
+      let rectOldElem = cardDeckElement.lastChild.getBoundingClientRect();
+      let oldLeft = rectOldElem.left;
+      let oldTop = rectOldElem.top;
+
+      let element = createMyElement("li", "card shirt-img", {
+        left: `${oldLeft}px`,
+        top: `${oldTop}px`,
+        "z-index": this.currentSetIndex,
+        position: "absolute"
       });
-      element.dataset.imgsrc = cardImg;
-      this.cardDeckElement.appendChild(element);
+
+      document.body.appendChild(element);
+      // element.dataset.imgsrc = cardImg;
+
+      if (i < column.cardTotal) {
+        element.dataset.imgsrc = cardImg;
+      } else if (i == column.cardTotal) {
+        element.style += `background-image: url(${cardImg})`;
+      }
+
+      let rectNewElem = column.columnElement.getBoundingClientRect();
+      let NewLeft = rectNewElem.left;
+      let NewTop = rectNewElem.top;
 
       $(element).animate(
         {
-          left: column.left.toString(),
-          top: `${column.cardTotal * WRAP_CARD_STEP}px`,
-          zIndex: column.cardTotal.toString()
+          left: `${NewLeft}px`,
+          top: `${NewTop + column.liCardArray.length * WRAP_CARD_STEP}px`,
+          zIndex: column.cardTotal
         },
-        1000
+        500
       );
-    }
 
-    //Перемещаем открытую карту в колонку
-    moveOpenedCard() {}
+      element.style.top = `${column.liCardArray.length * WRAP_CARD_STEP}px`;
+      element.style.left = 0;
+      column.columnElement.appendChild(element);
+
+      column.liCardArray.push(element);
+    }
 
     handOutCards() {}
   }
 
   /*===================
-      COLUMN  CLASS
+      COLUMN  
  =====================*/
   class Column {
     liCardArray = [];
     cardTotal = 0;
-    closedCardTotal;
+    //closedCardTotal = 0;
 
     columnElement;
     left;
 
     constructor(closedCardTotal, id) {
-      this.closedCardTotal = closedCardTotal;
+      //this.closedCardTotal = closedCardTotal;
       this.cardTotal = closedCardTotal + 1;
-
       this.columnElement = document.getElementById("column" + id);
-      this.left = this.columnElement.offsetLeft; //+ this.columnElement.offsetWidth / 2
+      this.left = this.columnElement.offsetLeft;
     }
   }
+
+  // MAIN
 
   let cardSet = new CardSet();
 
@@ -294,17 +318,25 @@ document.addEventListener("DOMContentLoaded", function(event) {
   //time.start();
 
   /*===================
-      CREATE ELEMENT FUNCTION
+      GAME
+ =====================*/
+  class Game {
+    constructor() {}
+  }
+  /*===================
+    CREATE ELEMENT FUNCTION
  =====================*/
 
   function createMyElement(tag, className, props, event) {
     const element = document.createElement(tag);
     element.className = className;
 
+    let cssText = "";
     for (prop in props) {
-      element.style[prop] = props[prop];
+      cssText += `${prop}:${props[prop]};`;
     }
 
+    element.cssText = cssText;
     if (event !== undefined)
       element.addEventListener(event["event"], event["handler"]);
 
@@ -352,62 +384,3 @@ document.addEventListener("DOMContentLoaded", function(event) {
     };
   };
 });
-
-// let element = document.createElement("li");
-// element.className = "card shirt-img";
-// element.style.right = `${this.currentSetIndex * 7}px`;
-// element.style.zIndex = this.currentSetIndex;
-// element.addEventListener("click", this.handOutCards);
-
-// class Timer {
-//   timerElement = document.getElementById("timerElement");
-//   // seconds = 0;
-//   // minuts = 0;
-
-//   //Добавляем ноль, если число состояит из одной цирфы
-
-//   setTimeOutFunction(minuts, seconds) {
-//     function formatDateNumber(number) {
-//       if (number < 10) return "0" + number;
-//       else return number;
-//     }
-
-//     seconds++;
-//     if (seconds == 60) {
-//       minuts++;
-//       seconds = 0;
-//     }
-
-//     this.timerElement.textContent =
-//       formatDateNumber(minuts) + ":" + formatDateNumber(seconds);
-//     setTimeout(this.setTimeOutFunction, 1000, minuts, seconds);
-//   }
-
-//   //Устанавливаем интервал для обновления времени
-//   startTimer() {
-//     let minuts = 0,
-//       seconds = 0;
-//     setTimeout(this.setTimeOutFunction, 1000, minuts, seconds);
-//   }
-
-//   //Обнуляем время таймера
-//   restartTimer() {}
-// }
-
-// timerElement = document.getElementById("timerElement");
-
-// function setIntervalFunction() {
-//   seconds++;
-//   if (seconds == 60) {
-//     minuts++;
-//     seconds = 0;
-//   }
-//   timerElement.textContent =
-//     formatDateNumber(minuts) + ":" + formatDateNumber(seconds);
-//   setTimeout(setIntervalFunction, 1000, minuts, seconds);
-// }
-
-// function formatDateNumber(number) {
-//   if (number < 10) return "0" + number;
-//   else return number;
-// }
