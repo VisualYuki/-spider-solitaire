@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-  const WRAP_CARD_STEP = 7; // количество пикселей между картами в колонке
+  const WRAP_CARD_STEP = 10; // количество пикселей между картами в колонке
 
   /*===================
     CARD SET 
@@ -63,6 +63,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
       this.createTwoSuitArray();
       this.createFourSuitArray();
       this.setSuitTotal_In_Deck(1);
+      this.shuffleCards(3);
     }
 
     //Заполняем массив из 104 карт колодой из одной масти
@@ -121,7 +122,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     // Получаем следующую случайную карту
     getNextRandCard() {
-      return this.currentArray[this.currentArrayIndex];
+      if (this.currentArrayIndex == this.currentArray.lenght)
+        this.currentArrayIndex = 0;
+      return this.currentArray[this.currentArrayIndex++];
     }
 
     //Перемешиваем карты в текущей колоде
@@ -152,7 +155,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
   // Класс колода для раздачи карт по колонкам.
   class Deck {
     //Константы
-    SET_NUM = 6; // количество карт в колоде для раздачи
+    SET_NUM = 5; // количество карт в колоде для раздачи
     SET_CARD_NUM = 10; //количество карт при раздаче на все колонки
 
     cardDeckElement = document.getElementById("card-deck");
@@ -191,15 +194,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
     // Добавляем карту в колоду
     addCard_OnBoard() {
       this.currentSetIndex++;
-      const element = createMyElement(
-        "li",
-        "card shirt-img",
-        {
-          right: `${this.currentSetIndex * WRAP_CARD_STEP}px`,
-          "z-index": this.currentSetIndex
-        },
-        { event: "click", handler: this.handOutCards }
-      );
+      const element = createMyElement("li", "card shirt-img");
+
+      element.style.right = `${this.currentSetIndex * WRAP_CARD_STEP}px`;
+      element.style.zIndex = this.currentSetIndex;
+      element.addEventListener("click", this.handOutCards);
 
       this.cardDeckElement.appendChild(element);
     }
@@ -208,7 +207,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     handOutDefaultCards() {
       //console.log(document.querySelector("header").getBoundingClientRect());
       let delay = 0;
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 7; i++) {
         for (let column of [
           column1,
           column2,
@@ -222,9 +221,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
           column10
         ]) {
           if (i <= column.cardTotal) {
-            delay += 10;
+            delay += 80;
             setTimeout(this.moveCard, delay, column, i);
-            //this.moveCard(column, i);
           }
         }
       }
@@ -234,44 +232,68 @@ document.addEventListener("DOMContentLoaded", function(event) {
     moveCard(column, i) {
       let cardImg = cardSet.getNextRandCard();
       let cardDeckElement = document.getElementById("card-deck");
-      let rectOldElem = cardDeckElement.lastChild.getBoundingClientRect();
+
+      //Задаем координаты карты в body относительно последней карты в колодн
+      let rectOldElem = cardDeckElement.lastElementChild.getBoundingClientRect();
       let oldLeft = rectOldElem.left;
       let oldTop = rectOldElem.top;
-
-      let element = createMyElement("li", "card shirt-img", {
-        left: `${oldLeft}px`,
-        top: `${oldTop}px`,
-        "z-index": this.currentSetIndex,
-        position: "absolute"
-      });
-
+      let element = createMyElement("li", "card shirt-img");
+      element.style.left = `${oldLeft}px`;
+      element.style.top = `${oldTop}px`;
+      element.style.zIndex = column.liCardArray.length;
+      element.style.position = "absolute";
       document.body.appendChild(element);
-      // element.dataset.imgsrc = cardImg;
 
+      //Открываем карту, если она последняя в колонке
       if (i < column.cardTotal) {
         element.dataset.imgsrc = cardImg;
       } else if (i == column.cardTotal) {
-        element.style += `background-image: url(${cardImg})`;
+        element.style.backgroundImage = `url(${cardImg})`;
       }
 
-      let rectNewElem = column.columnElement.getBoundingClientRect();
-      let NewLeft = rectNewElem.left;
-      let NewTop = rectNewElem.top;
+      //Задаем координты карты относительно ее колонки
+      // let rectNewElem = column.columnElement.getBoundingClientRect();
+      // let newLeft = rectNewElem.left;
+      // let newTop = rectNewElem.top + column.liCardArray.length * WRAP_CARD_STEP;
 
-      $(element).animate(
-        {
-          left: `${NewLeft}px`,
-          top: `${NewTop + column.liCardArray.length * WRAP_CARD_STEP}px`,
-          zIndex: column.cardTotal
-        },
-        500
-      );
-
-      element.style.top = `${column.liCardArray.length * WRAP_CARD_STEP}px`;
-      element.style.left = 0;
+      //! Сделать анимация перехода карты
+      // $(element).animate(
+      //   {
+      //     left: newLeft + "px",
+      //     top: newTop + "px"
+      //   },
+      //   500
+      // );
+      let newTop;
+      //Устанавливаем позицию карты к колонке
+      newTop = column.liCardArray.length * WRAP_CARD_STEP + "px";
+      element.style.top = newTop;
+      element.style.left = "0";
       column.columnElement.appendChild(element);
-
       column.liCardArray.push(element);
+      // column.columnElement.appendChild(element);
+
+      // $(element).animate(
+      //   {
+      //     left: "0",
+      //     top: `${column.liCardArray.length * WRAP_CARD_STEP}px`
+      //   },
+      //   0
+      // );
+
+      // element.cssText = `top:${column.liCardArray.length *
+      //   WRAP_CARD_STEP}px; left:0`;
+      // element.style.top = `${column.liCardArray.length * WRAP_CARD_STEP}px`;
+      // element.style.left = 0;
+      // element.style.bottom = 0;
+      // element.animate(
+      //   {
+      //     left: `${NewLeft}px`,
+      //     top: `${NewTop + column.liCardArray.length * WRAP_CARD_STEP}px`,
+      //     zIndex: column.cardTotal
+      //   },
+      //   500
+      // );
     }
 
     handOutCards() {}
@@ -283,7 +305,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
   class Column {
     liCardArray = [];
     cardTotal = 0;
-    //closedCardTotal = 0;
 
     columnElement;
     left;
@@ -291,7 +312,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
     constructor(closedCardTotal, id) {
       //this.closedCardTotal = closedCardTotal;
       this.cardTotal = closedCardTotal + 1;
-      this.columnElement = document.getElementById("column" + id);
+      this.columnElement = document.getElementById(
+        "column" + id
+      ).firstElementChild;
       this.left = this.columnElement.offsetLeft;
     }
   }
@@ -327,18 +350,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
     CREATE ELEMENT FUNCTION
  =====================*/
 
-  function createMyElement(tag, className, props, event) {
+  function createMyElement(tag, className) {
     const element = document.createElement(tag);
     element.className = className;
 
-    let cssText = "";
-    for (prop in props) {
-      cssText += `${prop}:${props[prop]};`;
-    }
+    // let cssText = "";
+    // for (prop in props) {
+    //   cssText += `${prop}:${props[prop]};`;
+    // }
 
-    element.cssText = cssText;
-    if (event !== undefined)
-      element.addEventListener(event["event"], event["handler"]);
+    // element.cssText = cssText;
+    // if (event !== undefined)
+    //   element.addEventListener(event["event"], event["handler"]);
 
     return element;
   }
