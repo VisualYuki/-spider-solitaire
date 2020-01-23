@@ -308,6 +308,13 @@ header {
   border-radius: 9px;
 }
 
+/* .column-card {
+  position: absolute;
+
+  border: 2px solid black;
+  border-radius: 9px;
+} */
+
 .shirt-img {
   box-sizing: content-box;
   background: url("../images/card-shirt.png") no-repeat center;
@@ -335,6 +342,6 @@ body {
   /* position: static !important; */
 }
 
-/* ul {
-  height: 10px;
-} */
+#columns > li li {
+  /* width: inherit; */
+}
