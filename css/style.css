@@ -331,3 +331,10 @@ header {
   width: 9.5%;
   height: 10px;
 }
+body {
+  /* position: static !important; */
+}
+
+/* ul {
+  height: 10px;
+} */
