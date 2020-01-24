@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     constructor() {
       //Добавляем путь изображения в каждый массив 4-ех мастей
       for (let suit of ["clubs", "spades", "diamonds", "hearts"]) {
-        for (let i = 2; i <= 14; i++) {
+        for (let i = 1; i <= 13; i++) {
           if (i < 10) this.cardImgIndex = "0" + i;
           else this.cardImgIndex = i;
 
@@ -294,58 +294,123 @@ document.addEventListener("DOMContentLoaded", function(event) {
       this.left = this.columnElement.offsetLeft;
     }
 
-    rightOrderCardList; //список карт, которые находятся в правильной порядке
+    compareCardOrder(currentSuit, nextSuit, currentNumber, nextNumber) {
+      if (currentSuit == nextSuit && ++currentNumber == nextNumber) return true;
+      else return false;
+    }
+
+    getSuit(elem) {
+      let srcImg = elem.style.backgroundImage;
+      let srcArray = srcImg.split("/");
+      let suit = srcArray[srcArray.length - 2];
+
+      return suit;
+    }
+
+    getCardNumber(elem) {
+      let srcImg = elem.style.backgroundImage;
+      let srcArray = srcImg.split("/");
+      "1212".sub;
+      let number = srcArray[srcArray.length - 1].substr(0, 2);
+
+      return +number;
+    }
+
+    rightOrderCardList = []; //список карт, которые находятся в правильной порядке
     eventCard; //в колоде карта одна на которую накладывается событие click
     addEventOnCard() {
-      let currentSuit = this.getSuit(),
-        nextSuit = this.getSuit();
+      if (this.openedCardList.length > 1) {
+        for (let i = this.openedCardList.length - 1; i >= 0; i++) {
+          let currentSuit = this.getSuit(this.openedCardList[i]),
+            nextSuit = this.getSuit(this.openedCardList[i - 1]);
 
-      let currentNumber = this.getCardNumber(),
-        nextNumber = this.getCardNumber();
+          let currentNumber = this.getCardNumber(this.openedCardList[i]),
+            nextNumber = this.getCardNumber(this.openedCardList[i - 1]);
 
-      for (let i = this.openedCardList.length - 1; i > 0; i++) {
-        if (
-          !this.compareCardOrder(
-            currentSuit,
-            nextSuit,
-            currentNumber,
-            nextNumber
-          )
-        ) {
-          this.rightOrderCardList = this.openedCardList.slice(i);
-          this.eventCard = this.openedCardList[i];
-          this.idEventCard = this.eventCard.addEventListener(
-            "click",
-            this.moveEventCard
-          );
+          if (
+            !this.compareCardOrder(
+              currentSuit,
+              nextSuit,
+              currentNumber,
+              nextNumber
+            )
+          ) {
+            this.rightOrderCardList.push(this.openedCardList.slice(i));
+            this.eventCard = this.openedCardList[i];
+            this.idEventCard = this.eventCard.addEventListener(
+              "mousedown",
+              this.moveEventCard
+            );
+          }
         }
+      } else {
+        this.rightOrderCardList.push(this.openedCardList[0]);
+        this.eventCard = this.openedCardList[0];
+        this.idEventCard = this.eventCard.addEventListener(
+          "mousedown",
+          this.moveEventCard
+        );
       }
     }
 
     moveEventCard = () => {
-      document.addEventListener("move", this.onMousMove);
+      // document.addEventListener("move", this.onMousMove);
+      //this.idMouseMove =
+      document.body.onmousemove = this.onmouseMove;
+      document.onmouseup = this.onmouseUp;
     };
 
-    onMousMove = event => {
-      // let xCursor =;
-      // let yCursor = ;
+    dragElem = document.querySelector(".drag-container");
 
-      this.moveAt(event.clientX, event.clientY);
+    onmouseUp = event => {
+      let found = false;
+      document.body.onmousemove = null;
+      columnList.forEach(item => {
+        let left = item.columnElement.getBoundingClientRect().left;
+        let right = item.columnElement.getBoundingClientRect().right;
+
+        if (left <= event.clientX && event.clientX <= right) {
+          let currentSuit = this.getSuit(this.eventCard),
+            nextSuit = this.getSuit(
+              item.openedCardList[item.openedCardList.length - 1]
+            );
+
+          let currentNumber = this.getCardNumber(this.eventCard),
+            nextNumber = this.getCardNumber(
+              item.openedCardList[item.openedCardList.length - 1]
+            );
+
+          let answer = this.compareCardOrder(
+            currentSuit,
+            nextSuit,
+            currentNumber,
+            nextNumber
+          );
+
+          if (answer) {
+            found = true;
+            item.addCards_FromOtherColumn(this.rightOrderCardList);
+          } else {
+          }
+        } else {
+        }
+      });
+      if (found) {
+      }
     };
 
-    moveAt(clientX, clientY) {
-      let offset = 0;
-      this.rightOrderCardList.forEach(card => {});
-    }
+    addCards_FromOtherColumn(array) {}
 
-    compareCardOrder(currentSuit, nextSuit, currentNumber, nextNumber) {
-      if (currentSuit == nextSuit && currentNumber++ == nextNumber) return true;
-      else return false;
-    }
+    onmouseMove = event => {
+      this.dragElem.style.top = event.clientY + "px";
+      this.dragElem.style.left = event.clientX - 50 + "px";
 
-    getSuit() {}
-
-    getCardNumber() {}
+      this.rightOrderCardList.forEach(card => {
+        card.style.top =
+          WRAP_CARD_STEP * (this.dragElem.children.length - 1) + "px";
+        this.dragElem.appendChild(card);
+      });
+    };
 
     //* Меняем индекс
     restartColumn() {

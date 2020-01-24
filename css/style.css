@@ -357,6 +357,13 @@ body {
   background-color: transparent;
 }
 
+.drag-container {
+  z-index: 100;
+  width: 100px;
+
+  /* background-color: red; */
+}
+
 /* #columns > li li {
   width: inherit;
 } */
