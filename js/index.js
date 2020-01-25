@@ -1,8 +1,51 @@
 document.addEventListener("DOMContentLoaded", function(event) {
-  const WRAP_CARD_STEP = 10; // количество пикселей между картами в колонке
+  const CARD_WRAP_STEP = 10; // количество пикселей между картами в колонке
 
   /*===================
-    CARD SET 
+      TIMER
+=====================*/
+
+  //Объект для текущего времени игры
+  class Timer {
+    timerElement = document.getElementById("timerElement");
+    seconds = 0;
+    minuts = 0;
+
+    // Запустить таймер
+    start = () => {
+      setInterval(this.setIntervalFunction, 1000);
+    };
+
+    //Форматировать время
+    formatDateNumber = number => {
+      if (number < 10) return "0" + number;
+      else return number;
+    };
+
+    // Функция для SetTimeOut
+    setIntervalFunction = () => {
+      this.seconds++;
+      if (this.seconds == 60) {
+        this.minuts++;
+        this.seconds = 0;
+      }
+
+      timerElement.textContent =
+        this.formatDateNumber(this.minuts) +
+        ":" +
+        this.formatDateNumber(this.seconds);
+    };
+
+    // Перезапустить таймер
+    restart = () => {
+      this.timerElement.textContent = "00:00";
+      this.seconds = 0;
+      this.minuts = 0;
+    };
+  }
+
+  /*===================
+      CARD SET 
  =====================*/
 
   // Класс для получения случайной карты из 104 без повторения.
@@ -28,78 +71,88 @@ document.addEventListener("DOMContentLoaded", function(event) {
     currentArrayIndex = 0;
 
     constructor() {
-      //Добавляем путь изображения в каждый массив 4-ех мастей
+      //Создаем
+      let elem;
       for (let suit of ["clubs", "spades", "diamonds", "hearts"]) {
         for (let i = 1; i <= 13; i++) {
           if (i < 10) this.cardImgIndex = "0" + i;
           else this.cardImgIndex = i;
 
+          elem = new cardElement(
+            `../images/cards/${suit}/${this.cardImgIndex}.png`,
+            suit,
+            i
+          );
+
           switch (suit) {
             case "clubs":
-              this.clubsImgArray[
-                this.clubsImgArray.length
-              ] = `../images/cards/${suit}/${this.cardImgIndex}.png`;
+              this.clubsImgArray[this.clubsImgArray.length] = elem;
               break;
             case "spades":
-              this.spadesImgArray[
-                this.spadesImgArray.length
-              ] = `../images/cards/${suit}/${this.cardImgIndex}.png`;
+              this.spadesImgArray[this.spadesImgArray.length] = elem;
               break;
             case "diamonds":
-              this.diamondsImgArray[
-                this.diamondsImgArray.length
-              ] = `../images/cards/${suit}/${this.cardImgIndex}.png`;
+              this.diamondsImgArray[this.diamondsImgArray.length] = elem;
               break;
             case "hearts":
-              this.heartsImgArray[
-                this.heartsImgArray.length
-              ] = `../images/cards/${suit}/${this.cardImgIndex}.png`;
+              this.heartsImgArray[this.heartsImgArray.length] = elem;
               break;
           }
         }
       }
 
       this.createOneSuitArray();
-      this.createTwoSuitArray();
-      this.createFourSuitArray();
       this.setSuitTotal_In_Deck(1);
-      this.shuffleCards(3);
+      this.shuffleCards(4);
+    }
+
+    //* Копируем массив из классов
+    copyArray(array) {
+      let newArray = [];
+      array.forEach((item, index) => {
+        newArray[index] = new cardElement(
+          item.openedImageSource,
+          item.suit,
+          item.number
+        );
+      });
+      return newArray;
     }
 
     //* Заполняем массив из 104 карт колодой из одной масти
     createOneSuitArray() {
       this.oneSuitArray = this.spadesImgArray
-        .concat(this.spadesImgArray)
-        .concat(this.spadesImgArray)
-        .concat(this.spadesImgArray)
-        .concat(this.spadesImgArray)
-        .concat(this.spadesImgArray)
-        .concat(this.spadesImgArray)
-        .concat(this.spadesImgArray);
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.spadesImgArray));
     }
 
     //* Заполняем массив из 104 карт колодой из двух мастей
     createTwoSuitArray() {
       this.twoSuitArray = this.spadesImgArray
-        .concat(this.spadesImgArray)
-        .concat(this.spadesImgArray)
-        .concat(this.spadesImgArray)
-        .concat(this.diamondsImgArray)
-        .concat(this.diamondsImgArray)
-        .concat(this.diamondsImgArray)
-        .concat(this.diamondsImgArray);
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.diamondsImgArray))
+        .concat(this.copyArray(this.diamondsImgArray))
+        .concat(this.copyArray(this.diamondsImgArray))
+        .concat(this.copyArray(this.diamondsImgArray));
     }
 
     //* Заполняем массив из 104 карт колодой из четырех мастей
     createFourSuitArray() {
       this.fourSuitArray = this.clubsImgArray
-        .concat(this.clubsImgArray)
-        .concat(this.diamondsImgArray)
-        .concat(this.diamondsImgArray)
-        .concat(this.heartsImgArray)
-        .concat(this.heartsImgArray)
-        .concat(this.spadesImgArray)
-        .concat(this.spadesImgArray);
+        .concat(this.copyArray(this.clubsImgArray))
+        .concat(this.copyArray(this.diamondsImgArray))
+        .concat(this.copyArray(this.diamondsImgArray))
+        .concat(this.copyArray(this.heartsImgArray))
+        .concat(this.copyArray(this.heartsImgArray))
+        .concat(this.copyArray(this.spadesImgArray))
+        .concat(this.copyArray(this.spadesImgArray));
     }
 
     //* Устанавливаем количество мастей в колоде
@@ -111,9 +164,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
             this.currentArray = this.oneSuitArray;
             break;
           case 2:
+            if (this.twoSuitArray.length == 0) this.createTwoSuitArray();
             this.currentArray = this.twoSuitArray;
             break;
           case 4:
+            if (this.fourSuitArray.length == 0) this.createFourSuitArray();
             this.currentArray = this.fourSuitArray;
             break;
         }
@@ -125,8 +180,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
       if (this.currentArrayIndex == this.currentArray.length) {
         this.currentArrayIndex = 0;
         this.shuffleCards(2);
+        //console.log("Неверное количество мастей в setSuitTotal()");
       }
-
+      console.log("Количество взятых карт: " + (this.currentArrayIndex + 1));
       return this.currentArray[this.currentArrayIndex++];
     }
 
@@ -152,61 +208,127 @@ document.addEventListener("DOMContentLoaded", function(event) {
   }
 
   /*===================
+    CARD_ELEMENT
+ =====================*/
+
+  //Класс, который содержит в себе карту со всеми ее данными
+  class cardElement {
+    element;
+    suit;
+    number;
+    openedImageSource;
+    closedImageSource = "../images/card-shirt.png";
+
+    constructor(openedImageSource, suit, number) {
+      this.suit = suit;
+      this.number = number;
+      this.openedImageSource = openedImageSource;
+      this.element = createMyElement("li", "card");
+      this.closeCard();
+    }
+
+    openCard = () => {
+      this.element.style.backgroundImage = `url(${this.openedImageSource})`;
+    };
+
+    closeCard = () => {
+      this.element.style.backgroundImage = `url(${this.closedImageSource})`;
+    };
+  }
+
+  /*======================
+    FUNCTIONS 
+ ========================*/
+
+  function createMyElement(tag, className, props) {
+    const element = document.createElement(tag);
+    element.className = className;
+
+    for (let prop in props) {
+      element.style[prop] = props[prop];
+    }
+
+    return element;
+  }
+
+  /*===================
       DECK 
  =====================*/
 
   // Класс колода для раздачи карт по колонкам.
   class Deck {
     //Константы
-    SET_NUM = 5; // количество карт в колоде для раздачи
-    SET_CARD_NUM = 10; //количество карт при раздаче на все колонки
+    DEFAULT_CARD_NUM = 5; // количество карт в колоде
+    COLUMN_TOTAL = 10; //количество карт при раздаче на все колонки
 
     cardDeckElement = document.getElementById("card-deck");
+    lastEventElem;
 
     //Параметры текущей колоды
-    currentSetIndex = -1;
-    cardSet = []; //двумерный массив в каждой строчке - карты для раздачи по колонкам
+    curCardTotal = 0;
+    startCardSet = []; //двумерный массив в каждой строчке - карты для раздачи по колонкам
 
-    constructor(set) {
+    constructor() {
       this.fillDeckFull_OnBoard();
     }
 
     //* Заполняем наборы карт для распределения по колонкам. Всего 6 наборов
     getCards() {
-      for (let i = 0; i < this.SET_NUM; i++) {
-        this.cardSet[i] = [];
-        for (let j = 0; j < this.SET_CARD_NUM; j++) {
-          this.cardSet[i][j] = cardSet.getNextRandCard();
+      this.curCardTotal = 0;
+      for (let i = 0; i < this.DEFAULT_CARD_NUM; i++) {
+        this.startCardSet[i] = [];
+        for (let j = 0; j < this.COLUMN_TOTAL; j++) {
+          this.startCardSet[i][j] = cardSet.getNextRandCard();
         }
       }
     }
 
-    // clearFullDeck__onBoard() {
-    //   while (this.cardDeckElement.lastChild !== null) this.removeCard_OnBoard();
-    // }
-
-    //* Заполняет колоды полностью (6 карт)
+    //* Заполняет колоду полностью (6 карт)
     fillDeckFull_OnBoard() {
-      while (this.cardDeckElement.children.length < this.SET_NUM) {
+      while (this.cardDeckElement.children.length < this.DEFAULT_CARD_NUM) {
         this.addCard_OnBoard();
       }
+      this.curCardTotal = this.cardDeckElement.children.length;
+
+      this.moveEvent(this.getLastChild());
+
+      // this.lastEventElem.onclick = null;
+      // this.getLastChild().onclick = this.handOutCards;
+      // this.lastEventElem = this.getLastChild();
+    }
+
+    moveEvent(eventElement) {
+      if (this.lastEventElem !== undefined) this.lastEventElem.onclick = null;
+      eventElement.onclick = this.handOutCards;
+      this.lastEventElem = eventElement;
+    }
+
+    //* Добавляем карту в колоду
+    addCard_OnBoard() {
+      const element = createMyElement("li", "card shirt-img");
+
+      element.style.right = `${this.curCardTotal * CARD_WRAP_STEP}px`;
+      element.style.zIndex = this.curCardTotal;
+      this.cardDeckElement.appendChild(element);
+
+      this.moveEvent(element);
+      // this.lastEventElem.onclick = null;
+      // element.onclick =  this.handOutCards;
+      // this.lastEventElem = element;
+
+      this.curCardTotal++;
+    }
+
+    handOutCards() {}
+
+    getLastChild() {
+      return this.cardDeckElement.lastElementChild;
     }
 
     //* Удаляет последную карту в колоде
     removeCard_OnBoard() {
       this.cardDeckElement.lastChild.remove();
-    }
-
-    //* Добавляем карту в колоду
-    addCard_OnBoard() {
-      this.currentSetIndex++;
-      const element = createMyElement("li", "card shirt-img");
-
-      element.style.right = `${this.currentSetIndex * WRAP_CARD_STEP}px`;
-      element.style.zIndex = this.currentSetIndex;
-      element.addEventListener("click", this.handOutCards);
-
-      this.cardDeckElement.appendChild(element);
+      this.curCardTotal--;
     }
 
     //* Раскидываем карты по колонкам в начале игры
@@ -245,7 +367,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
       //Задаем координты карты относительно ее колонки
       let rectNewElem = column.columnElement.getBoundingClientRect();
       let newLeft = rectNewElem.left;
-      let newTop = rectNewElem.top + column.liCardArray.length * WRAP_CARD_STEP;
+      let newTop = rectNewElem.top + column.liCardArray.length * CARD_WRAP_STEP;
 
       let anime = element.animate(
         [
@@ -261,14 +383,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
       );
       anime.addEventListener("finish", function() {
-        newTop = column.indexAnimation * WRAP_CARD_STEP + "px";
+        newTop = column.indexAnimation * CARD_WRAP_STEP + "px";
         element.style.top = newTop;
         element.style.left = "0";
         column.columnElement.appendChild(element);
       });
     }
 
-    handOutCards() {}
+    // clearFullDeck__onBoard() {
+    //   while (this.cardDeckElement.lastChild !== null) this.removeCard_OnBoard();
+    // }
   }
 
   /*===================
@@ -276,13 +400,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
  =====================*/
 
   class Column {
-    liCardArray = [];
-    openedCardList = [];
-    closedCardList = [];
-    cardTotal = 0;
+    liCardArray = []; //массив в начале игры для рестарта
+    openedCardList = []; //массив открытых карт
+    closedCardList = []; //массив закрытых карт
+    rightOrderCardList = []; //список карт, которые находятся в правильной порядке
 
-    columnElement; //ul
-    left;
+    eventCard; //в колоде карта одна, на которую накладывается событие click
+
+    cardTotal = 0;
+    columnElement; //Элемент в котором лежат все карты колонки
+    left; // количество пискелей с лева от начала экрана для колонки
     indexAnimation = 0; // Индекс массива карт, если нужно произвести анимацию снова
 
     constructor(closedCardTotal, id) {
@@ -294,30 +421,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
       this.left = this.columnElement.offsetLeft;
     }
 
-    compareCardOrder(currentSuit, nextSuit, currentNumber, nextNumber) {
-      if (currentSuit == nextSuit && ++currentNumber == nextNumber) return true;
-      else return false;
-    }
-
-    getSuit(elem) {
-      let srcImg = elem.style.backgroundImage;
-      let srcArray = srcImg.split("/");
-      let suit = srcArray[srcArray.length - 2];
-
-      return suit;
-    }
-
-    getCardNumber(elem) {
-      let srcImg = elem.style.backgroundImage;
-      let srcArray = srcImg.split("/");
-      "1212".sub;
-      let number = srcArray[srcArray.length - 1].substr(0, 2);
-
-      return +number;
-    }
-
-    rightOrderCardList = []; //список карт, которые находятся в правильной порядке
-    eventCard; //в колоде карта одна на которую накладывается событие click
     addEventOnCard() {
       if (this.openedCardList.length > 1) {
         for (let i = this.openedCardList.length - 1; i >= 0; i++) {
@@ -335,7 +438,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
               nextNumber
             )
           ) {
-            this.rightOrderCardList.push(this.openedCardList.slice(i));
+            this.rightOrderCardList.push(this.openedCardList.splice(i));
             this.eventCard = this.openedCardList[i];
             this.idEventCard = this.eventCard.addEventListener(
               "mousedown",
@@ -390,6 +493,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
           if (answer) {
             found = true;
             item.addCards_FromOtherColumn(this.rightOrderCardList);
+            this.rightOrderCardList = [];
+            // this.rightOrderCardList =
           } else {
           }
         } else {
@@ -399,7 +504,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
       }
     };
 
-    addCards_FromOtherColumn(array) {}
+    addCards_FromOtherColumn(array) {
+      this.rightOrderCardList.concat(array);
+    }
 
     onmouseMove = event => {
       this.dragElem.style.top = event.clientY + "px";
@@ -407,10 +514,32 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
       this.rightOrderCardList.forEach(card => {
         card.style.top =
-          WRAP_CARD_STEP * (this.dragElem.children.length - 1) + "px";
+          CARD_WRAP_STEP * (this.dragElem.children.length - 1) + "px";
         this.dragElem.appendChild(card);
       });
     };
+
+    compareCardOrder(currentSuit, nextSuit, currentNumber, nextNumber) {
+      if (currentSuit == nextSuit && ++currentNumber == nextNumber) return true;
+      else return false;
+    }
+
+    getSuit(elem) {
+      let srcImg = elem.style.backgroundImage;
+      let srcArray = srcImg.split("/");
+      let suit = srcArray[srcArray.length - 2];
+
+      return suit;
+    }
+
+    getCardNumber(elem) {
+      let srcImg = elem.style.backgroundImage;
+      let srcArray = srcImg.split("/");
+      "1212".sub;
+      let number = srcArray[srcArray.length - 1].substr(0, 2);
+
+      return +number;
+    }
 
     //* Меняем индекс
     restartColumn() {
@@ -580,67 +709,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
   }
 
   /*===================
-    CREATE ELEMENT FUNCTION
- =====================*/
-  //! ДОбавить свойства и параметры этой функции при вызове.
-  function createMyElement(tag, className) {
-    const element = document.createElement(tag);
-    element.className = className;
-    return element;
-  }
-
-  /*===================
-      TIMER OBJECT
-=====================*/
-
-  //Объект для текущего времени игры
-  const Timer = function() {
-    this.id;
-    this.timerElement = document.getElementById("timerElement");
-
-    this.seconds = 0;
-    this.minuts = 0;
-
-    // Запустить таймер
-    this.start = () => {
-      this.id = setInterval(this.setIntervalFunction, 1000);
-    };
-
-    //Форматировать время
-    this.formatDateNumber = number => {
-      if (number < 10) return "0" + number;
-      else return number;
-    };
-
-    // Функция для SetTimeOut
-    this.setIntervalFunction = () => {
-      this.seconds++;
-      if (this.seconds == 60) {
-        this.minuts++;
-        this.seconds = 0;
-      }
-
-      this.timerElement.textContent =
-        this.formatDateNumber(this.minuts) +
-        ":" +
-        this.formatDateNumber(this.seconds);
-    };
-
-    // Перезапустить таймер
-    this.restart = () => {
-      this.timerElement.textContent = "00:00";
-      this.seconds = 0;
-      this.minuts = 0;
-    };
-  };
-
-  /*===================
       MAIN 
 =====================*/
 
   let cardSet = new CardSet();
 
-  let deck = new Deck(cardSet);
+  let deck = new Deck();
 
   let column1 = new Column(5, 1),
     column2 = new Column(5, 2),
@@ -676,3 +750,79 @@ document.addEventListener("DOMContentLoaded", function(event) {
     time.start();
   }, 500);
 });
+
+// switch (suit) {
+//   case "clubs":
+//     elem = new cardElement(
+//       `../images/cards/${suit}/${this.cardImgIndex}.png`,
+//       suit,
+//       i
+//     );
+//     this.clubsImgArray[this.clubsImgArray.length] = elem;
+//     break;
+//   case "spades":
+//     elem = new cardElement(
+//       `../images/cards/${suit}/${this.cardImgIndex}.png`,
+//       suit,
+//       i
+//     );
+//     this.spadesImgArray[this.spadesImgArray.length] = elem;
+//     break;
+//   case "diamonds":
+//     elem = new cardElement(
+//       `../images/cards/${suit}/${this.cardImgIndex}.png`,
+//       suit,
+//       i
+//     );
+//     this.diamondsImgArray[this.diamondsImgArray.length] = elem;
+//     break;
+//   case "hearts":
+//     elem = new cardElement(
+//       `../images/cards/${suit}/${this.cardImgIndex}.png`,
+//       suit,
+//       i
+//     );
+//     this.heartsImgArray[this.heartsImgArray.length] = elem;
+//     break;
+// }
+
+// //Объект для текущего времени игры
+// const Timer = function() {
+//   this.id;
+//   this.timerElement = document.getElementById("timerElement");
+
+//   this.seconds = 0;
+//   this.minuts = 0;
+
+//   // Запустить таймер
+//   this.start = () => {
+//     this.id = setInterval(this.setIntervalFunction, 1000);
+//   };
+
+//   //Форматировать время
+//   this.formatDateNumber = number => {
+//     if (number < 10) return "0" + number;
+//     else return number;
+//   };
+
+//   // Функция для SetTimeOut
+//   this.setIntervalFunction = () => {
+//     this.seconds++;
+//     if (this.seconds == 60) {
+//       this.minuts++;
+//       this.seconds = 0;
+//     }
+
+//     this.timerElement.textContent =
+//       this.formatDateNumber(this.minuts) +
+//       ":" +
+//       this.formatDateNumber(this.seconds);
+//   };
+
+//   // Перезапустить таймер
+//   this.restart = () => {
+//     this.timerElement.textContent = "00:00";
+//     this.seconds = 0;
+//     this.minuts = 0;
+//   };
+// };
