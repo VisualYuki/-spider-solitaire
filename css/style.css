@@ -347,7 +347,7 @@ body {
   overflow: hidden;
 }
 
-.hide-header {
+.hide-block {
   position: absolute;
   top: 0;
   left: 0;
