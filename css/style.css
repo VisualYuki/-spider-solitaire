@@ -306,6 +306,9 @@ header {
 
   border: 2px solid black;
   border-radius: 9px;
+
+  background: no-repeat center;
+  background-size: cover;
 }
 
 /* .column-card {

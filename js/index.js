@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         this.shuffleCards(2);
         //console.log("Неверное количество мастей в setSuitTotal()");
       }
-      console.log("Количество взятых карт: " + (this.currentArrayIndex + 1));
+      //console.log("Количество взятых карт: " + (this.currentArrayIndex + 1));
       return this.currentArray[this.currentArrayIndex++];
     }
 
@@ -218,21 +218,24 @@ document.addEventListener("DOMContentLoaded", function(event) {
     number;
     openedImageSource;
     closedImageSource = "../images/card-shirt.png";
+    isOpened = false;
 
     constructor(openedImageSource, suit, number) {
       this.suit = suit;
       this.number = number;
       this.openedImageSource = openedImageSource;
-      this.element = createMyElement("li", "card");
+      this.element = createMyElement("li", "card", { position: "absolute" });
       this.closeCard();
     }
 
     openCard = () => {
       this.element.style.backgroundImage = `url(${this.openedImageSource})`;
+      this.isOpened = true;
     };
 
     closeCard = () => {
       this.element.style.backgroundImage = `url(${this.closedImageSource})`;
+      this.isOpened = false;
     };
   }
 
@@ -297,6 +300,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
       // this.lastEventElem = this.getLastChild();
     }
 
+    //* Поменять событие на последную карту
     moveEvent(eventElement) {
       if (this.lastEventElem !== undefined) this.lastEventElem.onclick = null;
       eventElement.onclick = this.handOutCards;
@@ -327,16 +331,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     //* Удаляет последную карту в колоде
     removeCard_OnBoard() {
-      this.cardDeckElement.lastChild.remove();
+      this.getLastChild().remove();
+      this.moveEvent(this.getLastChild());
+
       this.curCardTotal--;
     }
 
     //* Раскидываем карты по колонкам в начале игры
-    handOutDefaultCards(hideHeaderElem) {
+    handOutDefaultCards() {
       //! Найти максимум из колонок.
 
       let delay = 0;
-      for (let i = 1; i <= 7; i++) {
+      for (let i = 1; i <= 6; i++) {
         for (let column of [
           column1,
           column2,
@@ -351,44 +357,54 @@ document.addEventListener("DOMContentLoaded", function(event) {
         ]) {
           if (i <= column.cardTotal) {
             delay += 80;
-            setTimeout(this.moveCard, delay, column, i);
+            setTimeout(
+              this.moveCard,
+              delay,
+              column,
+              column.defaulCardArray[i - 1],
+              i
+            );
           }
         }
       }
     }
 
+    getPageLeft() {
+      let rectElem = this.getLastChild().getBoundingClientRect();
+      return rectElem.left;
+    }
+
+    getPageTop() {
+      let rectElem = this.getLastChild().getBoundingClientRect();
+      return rectElem.top;
+    }
+
     //* Перемещаем карту в колонку
-    moveCard(column, i) {
-      //Задаем координаты карты в body относительно последней карты в колоде
+    moveCard = (column, cardObject, zIndex) => {
+      document.body.appendChild(cardObject.element);
+      let newLeft = column.getPageLeft() + "px";
+      let newTop = column.getPageTop() + (zIndex + 1) * CARD_WRAP_STEP + "px";
 
-      let element = column.getCardForMove(i);
-      document.body.appendChild(element);
+      cardObject.element.style.zIndex = zIndex;
 
-      //Задаем координты карты относительно ее колонки
-      let rectNewElem = column.columnElement.getBoundingClientRect();
-      let newLeft = rectNewElem.left;
-      let newTop = rectNewElem.top + column.liCardArray.length * CARD_WRAP_STEP;
-
-      let anime = element.animate(
+      let anime = cardObject.element.animate(
         [
           {
-            left: element.style.left,
-            top: element.style.top
+            left: this.getPageLeft() + "px",
+            top: this.getPageTop() + "px"
           },
-          { left: newLeft + "px", top: newTop + "px" }
+          { left: newLeft, top: newTop }
         ],
         {
-          // duration: 200
-          // fill: "forwards"
+          //duration: 400
+          //fill: "both"
         }
       );
+
       anime.addEventListener("finish", function() {
-        newTop = column.indexAnimation * CARD_WRAP_STEP + "px";
-        element.style.top = newTop;
-        element.style.left = "0";
-        column.columnElement.appendChild(element);
+        column.addCard__OnBoard(cardObject, zIndex);
       });
-    }
+    };
 
     // clearFullDeck__onBoard() {
     //   while (this.cardDeckElement.lastChild !== null) this.removeCard_OnBoard();
@@ -400,25 +416,69 @@ document.addEventListener("DOMContentLoaded", function(event) {
  =====================*/
 
   class Column {
-    liCardArray = []; //массив в начале игры для рестарта
+    defaulCardArray = []; //массив в начале игры для рестарта
     openedCardList = []; //массив открытых карт
     closedCardList = []; //массив закрытых карт
-    rightOrderCardList = []; //список карт, которые находятся в правильной порядке
+    rightOrderCardList = []; //список карт, находящихся в правильном порядке
 
     eventCard; //в колоде карта одна, на которую накладывается событие click
 
     cardTotal = 0;
     columnElement; //Элемент в котором лежат все карты колонки
-    left; // количество пискелей с лева от начала экрана для колонки
-    indexAnimation = 0; // Индекс массива карт, если нужно произвести анимацию снова
 
-    constructor(closedCardTotal, id) {
+    constructor(cardTotal, id) {
       //this.closedCardTotal = closedCardTotal;
-      this.cardTotal = closedCardTotal + 1;
+      this.cardTotal = cardTotal;
       this.columnElement = document.getElementById(
         "column" + id
       ).firstElementChild;
-      this.left = this.columnElement.offsetLeft;
+      //this.left = this.columnElement.offsetLeft;
+    }
+
+    //* Сдвиг от начала колонки для следующей карты для вставки
+    getClientOffsetTop() {
+      return (
+        (this.openedCardList.length + this.closedCardList.length + 1) *
+        CARD_WRAP_STEP
+      );
+    }
+
+    getPageLeft() {
+      let rectElem = this.columnElement.getBoundingClientRect();
+      return rectElem.left;
+    }
+
+    getPageTop() {
+      let rectElem = this.columnElement.getBoundingClientRect();
+      return rectElem.top;
+    }
+
+    //* Добавить карту в колонку на поле
+    addCard__OnBoard(cardObject, zIndex) {
+      if (cardObject.isOpened) {
+        this.openedCardList.push(cardObject);
+      } else {
+        this.closedCardList.push(cardObject);
+      }
+
+      cardObject.element.style.top = this.getClientOffsetTop() + "px";
+      cardObject.element.style.left = 0;
+      cardObject.element.style.zIndex = zIndex;
+      this.columnElement.appendChild(cardObject.element);
+    }
+
+    //* Получить карты для внутреннего массива
+    getCards() {
+      let card;
+      for (let i = 1; i < this.cardTotal; i++) {
+        card = cardSet.getNextRandCard();
+        this.defaulCardArray[i - 1] = card;
+
+        //this.addCard__OnBoard(card, i);
+      }
+      card = cardSet.getNextRandCard();
+      card.openCard();
+      this.defaulCardArray[this.cardTotal - 1] = card;
     }
 
     addEventOnCard() {
@@ -524,76 +584,38 @@ document.addEventListener("DOMContentLoaded", function(event) {
       else return false;
     }
 
-    getSuit(elem) {
-      let srcImg = elem.style.backgroundImage;
-      let srcArray = srcImg.split("/");
-      let suit = srcArray[srcArray.length - 2];
-
-      return suit;
-    }
-
-    getCardNumber(elem) {
-      let srcImg = elem.style.backgroundImage;
-      let srcArray = srcImg.split("/");
-      "1212".sub;
-      let number = srcArray[srcArray.length - 1].substr(0, 2);
-
-      return +number;
-    }
-
-    //* Меняем индекс
-    restartColumn() {
-      this.indexAnimation = 0;
-    }
-
     //* Убрать карты с колонки на поле
-    clearColumn(zeroArray = true) {
-      if (zeroArray) this.liCardArray = [];
+    clearColumn(restartClear = false) {
+      if (!restartClear) this.defaulCardArray = [];
       while (this.columnElement.children.length > 0) {
         this.columnElement.lastChild.remove();
       }
+      this.closeAllCards(restartClear);
+    }
+
+    closeAllCards(restartClear) {
+      this.openedCardList.forEach(item => {
+        item.closeCard();
+      });
+
+      this.defaulCardArray.forEach(item => {
+        item.closeCard();
+      });
+
+      if (!restartClear && this.defaulCardArray.length > 0)
+        this.defaulCardArray[this.defaulCardArray.length - 1].openCard();
+
       this.closedCardList = [];
       this.openedCardList = [];
     }
 
     //* Получить карту для перемещения из колоды в колонку
-    getCardForMove() {
-      if (this.indexAnimation == this.liCardArray.length)
-        this.indexAnimation = 0;
+    // getCardForMove() {
+    //   if (this.indexAnimation == this.defaulCardArray.length)
+    //     this.indexAnimation = 0;
 
-      return this.liCardArray[this.indexAnimation++];
-    }
-
-    //* Получить карты для внутреннего массива
-    getCards() {
-      let cardDeckElement = document.getElementById("card-deck");
-      let rectOldElem = cardDeckElement.lastElementChild.getBoundingClientRect();
-
-      let oldLeft = rectOldElem.left;
-      let oldTop = rectOldElem.top;
-      let element;
-      let cardImg;
-
-      for (let i = 1; i <= this.cardTotal; i++) {
-        cardImg = cardSet.getNextRandCard();
-
-        element = createMyElement("li", "card shirt-img");
-        element.style.left = `${oldLeft}px`;
-        element.style.top = `${oldTop}px`;
-        element.style.zIndex = this.liCardArray.length;
-        element.style.position = "absolute";
-
-        //Открываем карту, если она последняя в колонке
-        if (i < this.cardTotal) {
-          element.dataset.imgsrc = cardImg;
-        } else if (i == this.cardTotal) {
-          element.style.backgroundImage = `url(${cardImg})`;
-        }
-
-        this.liCardArray.push(element);
-      }
-      this.openedCardList.push(this.liCardArray[this.liCardArray.length - 1]);
-    }
+    //   return this.defaulCardArray[this.indexAnimation++];
+    // }
   }
 
   /*===================
@@ -638,7 +660,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
       columnList.forEach(column => {
         column.clearColumn();
         column.getCards();
-        column.addEventOnCard();
+        //column.addEventOnCard();
       });
 
       deck.handOutDefaultCards();
@@ -651,9 +673,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
       deck.fillDeckFull_OnBoard();
       columnList.forEach(column => {
-        column.clearColumn(false);
-        column.restartColumn();
-        column.addEventOnCard();
+        column.clearColumn(true);
+        //column.restartColumn();
+        //column.addEventOnCard();
       });
       deck.handOutDefaultCards();
       time.restart();
@@ -716,16 +738,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
   let deck = new Deck();
 
-  let column1 = new Column(5, 1),
-    column2 = new Column(5, 2),
-    column3 = new Column(5, 3),
-    column4 = new Column(5, 4),
-    column5 = new Column(4, 5),
-    column6 = new Column(4, 6),
-    column7 = new Column(4, 7),
-    column8 = new Column(4, 8),
-    column9 = new Column(4, 9),
-    column10 = new Column(4, 10);
+  let column1 = new Column(6, 1),
+    column2 = new Column(6, 2),
+    column3 = new Column(6, 3),
+    column4 = new Column(6, 4),
+    column5 = new Column(5, 5),
+    column6 = new Column(5, 6),
+    column7 = new Column(5, 7),
+    column8 = new Column(5, 8),
+    column9 = new Column(5, 9),
+    column10 = new Column(5, 10);
 
   let columnList = [
     column1,
@@ -750,79 +772,57 @@ document.addEventListener("DOMContentLoaded", function(event) {
     time.start();
   }, 500);
 });
+//left; // количество пискелей с лева от начала экрана для колонки
+//indexAnimation = 0; // Индекс массива карт, если нужно произвести анимацию снова
 
-// switch (suit) {
-//   case "clubs":
-//     elem = new cardElement(
-//       `../images/cards/${suit}/${this.cardImgIndex}.png`,
-//       suit,
-//       i
-//     );
-//     this.clubsImgArray[this.clubsImgArray.length] = elem;
-//     break;
-//   case "spades":
-//     elem = new cardElement(
-//       `../images/cards/${suit}/${this.cardImgIndex}.png`,
-//       suit,
-//       i
-//     );
-//     this.spadesImgArray[this.spadesImgArray.length] = elem;
-//     break;
-//   case "diamonds":
-//     elem = new cardElement(
-//       `../images/cards/${suit}/${this.cardImgIndex}.png`,
-//       suit,
-//       i
-//     );
-//     this.diamondsImgArray[this.diamondsImgArray.length] = elem;
-//     break;
-//   case "hearts":
-//     elem = new cardElement(
-//       `../images/cards/${suit}/${this.cardImgIndex}.png`,
-//       suit,
-//       i
-//     );
-//     this.heartsImgArray[this.heartsImgArray.length] = elem;
-//     break;
+// card = cardSet.getNextRandCard();
+// card.openCard();
+// this.addCard__OnBoard(card.element, this.cardTotal);
+
+// let cardDeckElement = document.getElementById("card-deck");
+// let rectOldElem = cardDeckElement.lastElementChild.getBoundingClientRect();
+
+// let oldLeft = rectOldElem.left;
+// let oldTop = rectOldElem.top;
+// let element;
+// let cardImg;
+
+// for (let i = 1; i <= this.cardTotal; i++) {
+//   cardImg = cardSet.getNextRandCard();
+
+//   element = createMyElement("li", "card shirt-img");
+//   element.style.left = `${oldLeft}px`;
+//   element.style.top = `${oldTop}px`;
+//   element.style.zIndex = this.defaulCardArray.length;
+//   element.style.position = "absolute";
+
+//   // //Открываем карту, если она последняя в колонке
+//   // if (i < this.cardTotal) {
+//   //   element.dataset.imgsrc = cardImg;
+//   // } else
+//   if (i == this.cardTotal) {
+//     element.style.backgroundImage = `url(${cardImg})`;
+//   }
+
+//   this.defaulCardArray.push(element);
+// }
+// this.openedCardList.push(
+//   this.defaulCardArray[this.defaulCardArray.length - 1]
+// );
+
+//getSuit(elem) {
+//   let srcImg = elem.style.backgroundImage;
+//   let srcArray = srcImg.split("/");
+//   let suit = srcArray[srcArray.length - 2];
+
+//   return suit;
 // }
 
-// //Объект для текущего времени игры
-// const Timer = function() {
-//   this.id;
-//   this.timerElement = document.getElementById("timerElement");
+// getCardNumber(elem) {
+//   let srcImg = elem.style.backgroundImage;
+//   let srcArray = srcImg.split("/");
+//   "1212".sub;
+//   let number = srcArray[srcArray.length - 1].substr(0, 2);
 
-//   this.seconds = 0;
-//   this.minuts = 0;
-
-//   // Запустить таймер
-//   this.start = () => {
-//     this.id = setInterval(this.setIntervalFunction, 1000);
-//   };
-
-//   //Форматировать время
-//   this.formatDateNumber = number => {
-//     if (number < 10) return "0" + number;
-//     else return number;
-//   };
-
-//   // Функция для SetTimeOut
-//   this.setIntervalFunction = () => {
-//     this.seconds++;
-//     if (this.seconds == 60) {
-//       this.minuts++;
-//       this.seconds = 0;
-//     }
-
-//     this.timerElement.textContent =
-//       this.formatDateNumber(this.minuts) +
-//       ":" +
-//       this.formatDateNumber(this.seconds);
-//   };
-
-//   // Перезапустить таймер
-//   this.restart = () => {
-//     this.timerElement.textContent = "00:00";
-//     this.seconds = 0;
-//     this.minuts = 0;
-//   };
-// };
+//   return +number;
+// }
