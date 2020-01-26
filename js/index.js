@@ -350,7 +350,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         column.addCard_InList(this.startCardSet[localTotal - 1][index]);
         setTimeout(
           this.moveCard,
-          (delay = 0),
+          delay,
           column,
           this.startCardSet[localTotal - 1][index],
           column.getNextZIndex()
@@ -401,7 +401,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             column.addCard_InList(column.defaulCardArray[i - 1]);
             setTimeout(
               this.moveCard,
-              (delay = 0),
+              delay,
               column,
               column.defaulCardArray[i - 1],
               i
@@ -435,8 +435,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         "px";
       cardObject.element.style.zIndex = zIndex;
 
-      //column.addCard_InList(cardObject);
-
       let anime = cardObject.element.animate(
         [
           {
@@ -463,6 +461,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
   class Column {
     defaulCardArray = []; //массив в начале игры для рестарта
+    defaultCardArrayIndex;
     openedCardList = []; //массив открытых карт
     closedCardList = []; //массив закрытых карт
     rightOrderCardList = []; //список карт, находящихся в правильном порядке
@@ -485,7 +484,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     //* Сдвиг от начала колонки для следующей карты для вставки
     getClientOffsetTop(isOpenedCard = true) {
       if (this.columnElement.lastElementChild !== null) {
-        if (isOpenedCard && this.openedCardList.length > 1)
+        if (isOpenedCard && this.openedCardList.length > 1 && isBack)
           return (
             this.columnElement.lastElementChild.offsetTop + CARD_WRAP_STEP * 2.5
           );
@@ -519,12 +518,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
 
     //* Добавить карту в колонку на поле
-    addCard__OnBoard(cardObject, zIndex) {
+    addCard__OnBoard(cardObject, back) {
       cardObject.element.style.top =
-        this.getClientOffsetTop(cardObject.isOpened) + "px";
+        this.getClientOffsetTop(cardObject.isOpened, back) + "px";
 
       cardObject.element.style.left = 0;
-      cardObject.element.style.zIndex = zIndex;
+      cardObject.element.style.zIndex = this.columnElement.children.length;
       this.columnElement.appendChild(cardObject.element);
     }
 
@@ -544,15 +543,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
         card = cardSet.getNextRandCard();
         card.closeCard();
         this.defaulCardArray[i - 1] = card;
-        //this.closedCardList.push(card);
-
-        //this.addCard__OnBoard(card, i);
       }
       card = cardSet.getNextRandCard();
-      //card.openCard();
-      this.defaulCardArray[this.cardTotal - 1] = card;
 
-      //this.openedCardList[0] = card;
+      this.defaulCardArray[this.cardTotal - 1] = card;
     }
 
     //* Проверить правильность порядка карт
@@ -587,7 +581,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
           this.isRightOrder(
             this.openedCardList[lengthList - 2],
             this.openedCardList[lengthList - 1]
-          )
+          ) &&
+          this.rightOrderCardList.includes(this.openedCardList[lengthList - 2])
         )
           this.rightOrderCardList.push(this.openedCardList[lengthList - 1]);
       } else if (lengthList == 1) {
@@ -607,81 +602,81 @@ document.addEventListener("DOMContentLoaded", function(event) {
       ].element;
     };
 
-    //!(((((((((((((((((((((((((((((((((((((((((((
-
     mousedownEvent = () => {
-      //drag.addMoveEvent();
-      drag.addCards(this.rightOrderCardList);
+      drag.addCards(this.rightOrderCardList, this);
+      document.body.onmouseup = this.mouseupEvent;
     };
 
-    mouseupEvent = () => {
-      //drag.removeMoveEvent();
-    };
+    zeroRightOrderCardList() {
+      this.openedCardList = this.openedCardList.slice(
+        this.rightOrderCardList.length
+      );
 
-    moveEventCard = () => {
-      // document.addEventListener("move", this.onMousMove);
-      //this.idMouseMove =
-      document.body.onmousemove = this.onmouseMove;
-      document.onmouseup = this.onmouseUp;
-    };
+      this.rightOrderCardList = [];
 
-    dragElem = document.querySelector(".drag-container");
+      if (this.openedCardList.length > 0) {
+        this.rightOrderCardList.unshift(this.openedCardList[0]);
+      } else if (
+        this.openedCardList.length == 0 &&
+        this.closedCardList.length > 0
+      ) {
+        let card = this.closedCardList.shift();
+        card.openCard();
+        this.openedCardList.unshift(card);
+      }
+      this.setClickEvent();
+    }
 
-    onmouseUp = event => {
+    isBack = true;
+
+    mouseupEvent = event => {
       let found = false;
-      document.body.onmousemove = null;
-      columnList.forEach(item => {
-        let left = item.columnElement.getBoundingClientRect().left;
-        let right = item.columnElement.getBoundingClientRect().right;
-
+      columnList.forEach(column => {
+        let left = column.columnElement.getBoundingClientRect().left;
+        let right = column.columnElement.getBoundingClientRect().right;
         if (left <= event.clientX && event.clientX <= right) {
-          let currentSuit = this.getSuit(this.eventCard),
-            nextSuit = this.getSuit(
-              item.openedCardList[item.openedCardList.length - 1]
-            );
+          if (
+            this.isRightOrder(
+              drag.list[drag.list.length - 1],
+              column.rightOrderCardList[0]
+            )
+          ) {
+            sound.playCorrect();
+            for (let i = drag.list.length - 1; i >= 0; i--) {
+              let card = drag.list[i];
+              column.rightOrderCardList.unshift(card);
+              column.openedCardList.unshift(card);
+              column.addCard__OnBoard(card);
+            }
 
-          let currentNumber = this.getCardNumber(this.eventCard),
-            nextNumber = this.getCardNumber(
-              item.openedCardList[item.openedCardList.length - 1]
-            );
-
-          let answer = this.compareCardOrder(
-            currentSuit,
-            nextSuit,
-            currentNumber,
-            nextNumber
-          );
-
-          if (answer) {
+            column.setClickEvent();
             found = true;
-            item.addCards_FromOtherColumn(this.rightOrderCardList);
-            this.rightOrderCardList = [];
-            // this.rightOrderCardList =
-          } else {
+
+            drag.lastColumn.zeroRightOrderCardList();
           }
-        } else {
         }
       });
-      if (found) {
+      document.body.onmouseup = null;
+      if (!found) {
+        sound.playUncorrect();
+        //drag.
+        // isBack = false;
+
+        for (let i = drag.list.length - 1; i >= 0; i--) {
+          // if (i == drag.list.length - 2) isBack = true;
+          drag.lastColumn.addCard__OnBoard(drag.list[i]);
+        }
+        // drag.list.forEach(card => {
+        //   //drag.lastColumn.addCard_InList(card);
+
+        // });
       }
     };
 
-    addCards_FromOtherColumn(array) {
-      this.rightOrderCardList.concat(array);
-    }
-
-    onmouseMove = event => {
-      this.dragElem.style.top = event.clientY + "px";
-      this.dragElem.style.left = event.clientX - 50 + "px";
-
-      this.rightOrderCardList.forEach(card => {
-        card.style.top =
-          CARD_WRAP_STEP * (this.dragElem.children.length - 1) + "px";
-        this.dragElem.appendChild(card);
-      });
+    moveEventCard = () => {
+      document.body.onmousemove = this.onmouseMove;
+      document.onmouseup = this.onmouseUp;
     };
-
-    //!))))))))))))))))))))))))))))))))
 
     //* Убрать карты с колонки на поле
     clearColumn_OnBoard(restartClear) {
@@ -710,11 +705,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
     element = document.querySelector(".drag-container");
     offsetTop = 0;
     zIndex = 0;
+    list = [];
+    lastColumn;
     constructor() {
       document.body.onmousemove = this.moveEvent;
     }
 
-    addCards(cardList) {
+    addCards(cardList, lastColumn) {
+      this.zIndex = 0;
+      this.lastColumn = lastColumn;
+      this.list = cardList;
       for (let i = cardList.length - 1; i >= 0; i--) {
         cardList[i].element.style.top =
           this.zIndex * CARD_WRAP_STEP * 2.5 + "px";
@@ -861,7 +861,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     handOut;
     //background;
     element = document.querySelector(".header__sound");
-    isOn = false;
+    isOn = true;
 
     constructor() {
       this.correct = new Audio();
@@ -918,10 +918,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
   /*===================
       MAIN 
 =====================*/
+  let isBack = true;
 
   let cardSet = new CardSet();
-
   let deck = new Deck();
+  let time = new Timer();
+  let sound = new Sound();
+  let drag = new Drag();
 
   let column1 = new Column(6, 1),
     column2 = new Column(6, 2),
@@ -933,7 +936,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
     column8 = new Column(5, 8),
     column9 = new Column(5, 9),
     column10 = new Column(5, 10);
-
   let columnList = [
     column1,
     column2,
@@ -947,10 +949,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     column10
   ];
 
-  let time = new Timer();
   let game;
-  let sound = new Sound();
-  let drag = new Drag();
   //Будет лагать анимация без паузы, так как прогружаются другие элементы.
   setTimeout(function() {
     game = new Game();
@@ -958,48 +957,3 @@ document.addEventListener("DOMContentLoaded", function(event) {
     time.start();
   }, 500);
 });
-
-// if (this.openedCardList.length <= 1) {
-//   return (
-//     (this.openedCardList.length + this.closedCardList.length) *
-//     CARD_WRAP_STEP
-//   );
-// } else if (this.openedCardList.length > 1) {
-//   let top = this.columnElement.lastChild.offsetTop;
-//   return top + CARD_WRAP_STEP * 3;
-// }
-
-//this.openedCardList.forEach()
-
-// if (this.openedCardList.length > 1) {
-//   for (let i = this.openedCardList.length - 1; i >= 0; i++) {
-//     let currentSuit = this.getSuit(this.openedCardList[i]),
-//       nextSuit = this.getSuit(this.openedCardList[i - 1]);
-
-//     let currentNumber = this.getCardNumber(this.openedCardList[i]),
-//       nextNumber = this.getCardNumber(this.openedCardList[i - 1]);
-
-//     if (
-//       !this.compareCardOrder(
-//         currentSuit,
-//         nextSuit,
-//         currentNumber,
-//         nextNumber
-//       )
-//     ) {
-//       this.rightOrderCardList.push(this.openedCardList.splice(i));
-//       this.eventCard = this.openedCardList[i];
-//       this.idEventCard = this.eventCard.addEventListener(
-//         "mousedown",
-//         this.moveEventCard
-//       );
-//     }
-//   }
-// } else {
-//   this.rightOrderCardList.push(this.openedCardList[0]);
-//   this.eventCard = this.openedCardList[0];
-//   this.idEventCard = this.eventCard.addEventListener(
-//     "mousedown",
-//     this.moveEventCard
-//   );
-// }
