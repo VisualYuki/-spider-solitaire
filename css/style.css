@@ -248,6 +248,10 @@ header {
   content: "\ea26";
 }
 
+.header__sound_off:before {
+  content: "\ea2a";
+}
+
 .header__time-icon:before {
   content: "\e952";
 }
